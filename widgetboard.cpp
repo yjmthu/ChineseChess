@@ -44,9 +44,8 @@ void BoardWidget::resizeEvent(QResizeEvent *event)
 {
     int side = std::min(event->size().width(), event->size().height());
     leftPadding = side / 11, topPadding = side / 11, D = side / 11;
-    for (auto & i : m_btns.buttons()) {
-        auto c = static_cast<WidgetStone*>(i);
-        c->setStyleSheet(QString(
+    for (auto& [i, j] : m_btns) {
+        j->setStyleSheet(QString(
             "QPushButton{"
             "border-radius:%1px;"
             "border:1px solid brown;"
@@ -60,27 +59,31 @@ void BoardWidget::resizeEvent(QResizeEvent *event)
             "QPushButton:checked{"
             "background-color:yellow;"
             "}"
-        ).arg(D/2).arg(m_state->stones[c->index]->color == ChessPlayer::RED ? "red" : "black"));
-        c->setGeometry(leftPadding / 2 + m_state->stones[c->index]->col * D, topPadding / 2 + m_state->stones[c->index]->row * D, D, D);
+        ).arg(D/2).arg(m_state->stones[j->index]->color == ChessPlayer::RED ? "red" : "black"));
+        j->setGeometry(leftPadding / 2 + m_state->stones[j->index]->col * D, topPadding / 2 + m_state->stones[j->index]->row * D, D, D);
     }
 }
 
 void BoardWidget::mousePressEvent(QMouseEvent *event)
 {
     unsigned short r = (event->pos().y() - topPadding + D / 2) / D, c = (event->pos().x() - leftPadding  + D / 2) / D;
+    if (r > 10 || c > 9) return;
     // qDebug() << "检查移动" << r << c << (bool)m_state[r][c];
-    if (!m_state->board.grid[r][c] && WidgetStone::m_btnChecked)
+    if (!m_state->board.grid[r][c])
     {
-        qDebug() << "可以移动!";
-        m_state->apply_move(ChessMove {WidgetStone::m_btnChecked->index, r, c});
-        WidgetStone::m_btnChecked->setGeometry(leftPadding / 2 + c * D, topPadding / 2 + r * D, D, D);
-        WidgetStone::m_btnChecked->setChecked(false);
-        WidgetStone::m_btnChecked = nullptr;
+        if (WidgetStone::m_btnChecked)
+        {
+            qDebug() << "可以移动!";
+            m_state->apply_move(ChessMove {WidgetStone::m_btnChecked->index, r, c});
+            WidgetStone::m_btnChecked->setGeometry(leftPadding / 2 + c * D, topPadding / 2 + r * D, D, D);
+            WidgetStone::m_btnChecked->setChecked(false);
+            WidgetStone::m_btnChecked = nullptr;
+        }
     }
     else if (WidgetStone::m_btnChecked)
     {
         WidgetStone::m_btnChecked->setChecked(false);
-        WidgetStone::m_btnChecked = nullptr;
+        WidgetStone::m_btnChecked = m_btns[m_state->board.grid[r][c]->index];
     }
 }
 
@@ -88,9 +91,8 @@ void BoardWidget::mousePressEvent(QMouseEvent *event)
 BoardWidget::BoardWidget(QWidget *parent) : QWidget(parent), m_state(new ChessState)
 {
     for (auto& [i, j] : m_state->stones) {
-        m_btns.addButton(new WidgetStone(i, j, this));
+        m_btns[i] = new WidgetStone(i, j, this);
     }
-    m_btns.setExclusive(true);
 }
 
 BoardWidget::~BoardWidget()

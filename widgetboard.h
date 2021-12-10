@@ -5,6 +5,7 @@
 #include <QButtonGroup>
 
 class ChessState;
+class WidgetStone;
 
 class BoardWidget : public QWidget
 {
@@ -18,7 +19,7 @@ public:
     explicit BoardWidget(QWidget *parent = nullptr);
     ~BoardWidget();
     int leftPadding = 30, topPadding = 30, D = 50;
-    QButtonGroup m_btns;
+    std::map<unsigned short, WidgetStone*> m_btns;
     ChessState* m_state;
 };
 

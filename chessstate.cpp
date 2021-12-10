@@ -66,7 +66,7 @@ ChessState::ChessState():
             if (!j)
                 continue;
             else
-                stones[index++] = j;
+                stones[j->index=index++] = j;
     }
 }
 

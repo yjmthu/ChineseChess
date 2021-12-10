@@ -13,7 +13,7 @@ public:
         {"帥", "士", "相", "馬", "車", "炮", "兵"}
     };
     const enum Type { JIANG, SHI, XIANG, MA, CHE, PAO, BING } type;
-    unsigned short row, col;
+    unsigned short index, row, col;
     Color color;
     inline ChessStone(Type type, unsigned short r, unsigned short c, Color color):
         type(type), row(r), col(c), color(color) {}
