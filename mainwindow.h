@@ -1,5 +1,5 @@
-#ifndef CHECKERBOARD_H
-#define CHECKERBOARD_H
+#ifndef MAINWINDOW_H
+#define MAINWINDOW_H
 
 #include <QMainWindow>
 
@@ -10,12 +10,10 @@ QT_END_NAMESPACE
 class CheckerBoard : public QMainWindow
 {
     Q_OBJECT
-
+private:
+    void setupUi();
 public:
     CheckerBoard(QWidget *parent = nullptr);
     ~CheckerBoard();
-
-private:
-    Ui::CheckerBoard *ui;
 };
-#endif // CHECKERBOARD_H
+#endif // MAINWINDOW_H
