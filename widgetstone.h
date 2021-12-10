@@ -7,8 +7,10 @@
 
 class WidgetStone: public QPushButton
 {
-protected:
-    void focusOutEvent(QFocusEvent *event);
+    Q_OBJECT
+
+signals:
+    void beEat(unsigned short index);
 public:
     explicit WidgetStone(unsigned short i, ChessStone* stone, QWidget* parent);
     ~WidgetStone();

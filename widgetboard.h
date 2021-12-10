@@ -11,6 +11,9 @@ class BoardWidget : public QWidget
 {
     Q_OBJECT
 
+private:
+    inline QRect real_rect(int r, int c) { return {leftPadding / 2 + c * D, topPadding / 2 + r * D, D, D}; }
+
 protected:
     void paintEvent(QPaintEvent *event);
     void resizeEvent(QResizeEvent *event);

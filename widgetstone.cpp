@@ -10,30 +10,32 @@
 
 WidgetStone* WidgetStone::m_btnChecked = nullptr;
 
-void WidgetStone::focusOutEvent(QFocusEvent *event)
-{
-    setChecked(false);
-    WidgetStone::m_btnChecked = nullptr;
-    event->accept();
-//    QMessageBox::information(this, "提示", "丢失焦点");
-}
-
 WidgetStone::WidgetStone(unsigned short i, ChessStone* stone, QWidget* parent):
     QPushButton(parent), index(i)
 {
     setFocusPolicy(Qt::ClickFocus);
     setText(ChessStone::name_string[stone->color][stone->type]);
-    setCheckable(true);
-    connect(this, &QPushButton::clicked, [=](bool checked){
-        if (checked)
+    connect(this, &QPushButton::clicked, [=](){
+        if (m_btnChecked)
         {
-            setChecked(true);
-            WidgetStone::m_btnChecked = this;
+            if  (((m_btnChecked->index < 16 && index > 15) || (m_btnChecked->index > 15 && index < 16)))
+            {
+                emit beEat(index);
+            }
+            else
+            {
+
+                QString&& style = m_btnChecked->styleSheet();
+                m_btnChecked->setStyleSheet(styleSheet());
+                setStyleSheet(style);
+                m_btnChecked = this;
+            }
         }
         else
         {
-            setChecked(false);
-            WidgetStone::m_btnChecked = nullptr;
+            m_btnChecked = this;
+            QString style = styleSheet();
+            setStyleSheet(style.replace(style.indexOf("#e09a53"), 7,  "yellow"));
         }
     });
 }
