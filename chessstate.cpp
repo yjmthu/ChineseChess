@@ -70,9 +70,19 @@ ChessState::ChessState():
     }
 }
 
+ChessState::~ChessState()
+{
+    for (const auto& [i, j]: stones)
+        delete j;
+}
+
 void ChessState::apply_move(ChessMove *move)
 {
-
+    auto btn = stones[move->index];
+    board.grid[btn->row][btn->col] = nullptr;
+    board.grid[move->m_to_row][move->m_to_col] = btn;
+    btn->row = move->m_to_row;
+    btn->col = move->m_to_col;
 }
 
 void ChessState::is_valid_move(ChessMove *move)

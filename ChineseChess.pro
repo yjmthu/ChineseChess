@@ -10,7 +10,6 @@ CONFIG += c++11
 
 SOURCES += \
     chessboard.cpp \
-    chessmove.cpp \
     chessstate.cpp \
     main.cpp \
     mainwindow.cpp \

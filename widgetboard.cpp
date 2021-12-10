@@ -67,15 +67,12 @@ void BoardWidget::resizeEvent(QResizeEvent *event)
 
 void BoardWidget::mousePressEvent(QMouseEvent *event)
 {
-    int r = (event->pos().y() - topPadding + D / 2) / D, c = (event->pos().x() - leftPadding  + D / 2) / D;
+    unsigned short r = (event->pos().y() - topPadding + D / 2) / D, c = (event->pos().x() - leftPadding  + D / 2) / D;
     // qDebug() << "检查移动" << r << c << (bool)m_state[r][c];
     if (!m_state->board.grid[r][c] && WidgetStone::m_btnChecked)
     {
         qDebug() << "可以移动!";
-        auto btn = m_state->stones[WidgetStone::m_btnChecked->index];
-        m_state->board.grid[btn->row][btn->col] = nullptr;
-        m_state->board.grid[r][c] = btn;
-        btn->row = r; btn->col = c;
+        m_state->apply_move(ChessMove {WidgetStone::m_btnChecked->index, r, c});
         WidgetStone::m_btnChecked->setGeometry(leftPadding / 2 + c * D, topPadding / 2 + r * D, D, D);
         WidgetStone::m_btnChecked->setChecked(false);
         WidgetStone::m_btnChecked = nullptr;

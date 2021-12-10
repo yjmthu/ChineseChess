@@ -2,11 +2,9 @@
 #define CHESSMOVE_H
 
 
-class ChessMove
+struct ChessMove
 {
-public:
-    ChessMove();
-    unsigned short m_from_row, m_from_col;
+    unsigned short index;
     unsigned short m_to_row, m_to_col;
 };
 
