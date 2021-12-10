@@ -9,6 +9,7 @@ class WidgetStone: public QPushButton
 {
 protected:
     void mousePressEvent(QMouseEvent *event);
+    void focusOutEvent(QFocusEvent *event);
 public:
     explicit WidgetStone(unsigned short i, ChessStone* stone, QWidget* parent);
     ~WidgetStone();

@@ -19,6 +19,13 @@ void WidgetStone::mousePressEvent(QMouseEvent *event)
     }
 }
 
+void WidgetStone::focusOutEvent(QFocusEvent *event)
+{
+    setChecked(false);
+    WidgetStone::m_btnChecked = nullptr;
+    event->accept();
+}
+
 WidgetStone::WidgetStone(unsigned short i, ChessStone* stone, QWidget* parent):
     QPushButton(parent), index(i)
 {
