@@ -1,5 +1,5 @@
 #include "mainwindow.h"
-#include "boardwidget.h"
+#include "widgetboard.h"
 
 #include <QScreen>
 #include <QGuiApplication>

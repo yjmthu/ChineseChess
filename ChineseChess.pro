@@ -9,17 +9,23 @@ CONFIG += c++11
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    boardwidget.cpp \
+    chessboard.cpp \
+    chessmove.cpp \
+    chessstate.cpp \
     main.cpp \
     mainwindow.cpp \
-    stones.cpp \
-    stonewidget.cpp
+    widgetboard.cpp \
+    widgetstone.cpp
 
 HEADERS += \
-    boardwidget.h \
+    chessboard.h \
+    chessmove.h \
+    chessplayer.h \
+    chessstate.h \
+    chessstone.h \
     mainwindow.h \
-    stones.h \
-    stonewidget.h
+    widgetboard.h \
+    widgetstone.h
 
 FORMS +=
 
