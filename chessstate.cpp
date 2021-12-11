@@ -59,6 +59,8 @@ bool ChessState::can_move_xiang(const ChessStone *st, const ChessMove &move)
         return false;
     if (board[(st->row + move.m_to_row) / 2][(st->col + move.m_to_col) / 2])
         return false;
+    if ((st->row < 5 && move.m_to_row > 4) || (st->row > 4 && move.m_to_row < 5))
+        return false;
     return true;
 }
 
@@ -187,7 +189,7 @@ bool ChessState::can_move_bing(const ChessStone *st, const ChessMove &move)
         to_row = move.m_to_row;
     }
     if (cur_row < 5)
-        return to_row != cur_row;
+        return to_row > cur_row;
     return to_row >= cur_row;
 }
 
@@ -339,11 +341,11 @@ std::vector<ChessMove> ChessState::get_valid_moves()
 /// \return
 ///
 
-int ChessState::get_best_move_score(unsigned short depth)
+int ChessState::get_best_move_score(unsigned short depth)  // next = red player
 {
     ChessState temp_state(*this);
     ChessPlayer winer = get_winer();
-    qDebug() << "进入此地却无人";
+    qDebug() << "进入此地却无人" << temp_state.next_player;
     if (winer == next_player)
         return MAX_SCORE;
     else if (winer == next_player.other())
@@ -356,26 +358,26 @@ int ChessState::get_best_move_score(unsigned short depth)
     for (auto& candidate_move: get_valid_moves())
     {
         qDebug() << "循环王府, 五十五中" << candidate_move.index << candidate_move.m_to_col << candidate_move.m_to_row;
-        temp_state.apply_move(candidate_move);
-        our_result = -temp_state.get_best_move_score(depth-1);
-        qDebug() << "分数无常, 无需忧劳" << our_result;
+        temp_state.apply_move(candidate_move);                   // next = black
+        our_result = -temp_state.get_best_move_score(depth-1);   //
+        qDebug() << "分数无常, 无需忧劳" << our_result << best_so_far;
         if (our_result > best_so_far)
         {
             best_so_far = our_result;
-            if (next_player == ChessPlayer::BLACK)
+            if (next_player == ChessPlayer::BLACK)               // yes
             {
                 qDebug() << "黑方入场" << best_so_far;
-                if (best_so_far > black_best)
-                    black_best = best_so_far;
-                if (-best_so_far < red_best)
+                if (best_so_far > red_best)
+                    red_best = best_so_far;
+                if (-best_so_far < black_best)
                     return best_so_far;
             }
             else
             {
                 qDebug() << "红方入场" << best_so_far;
-                if (best_so_far > red_best)
-                    red_best = best_so_far;
-                if (-best_so_far < black_best)
+                if (best_so_far > black_best)
+                    black_best = best_so_far;
+                if (-best_so_far < red_best)
                     return best_so_far;
             }
         }
@@ -392,40 +394,42 @@ int ChessState::get_best_move_score(unsigned short depth)
 /// \return
 ///
 
-ChessMove ChessState::get_best_move(unsigned short depth)
+ChessMove ChessState::get_best_move(unsigned short depth) // next = black
 {
     std::vector<ChessMove> && possible_moves = get_valid_moves();
     ChessState temp_state(*this);
     int our_result, best_so_far = MIN_SCORE;
     for (auto& candidate_move: possible_moves)
     {
-        temp_state.apply_move(candidate_move);
-        qDebug() << "101010===========================================1";
-        our_result = -temp_state.get_best_move_score(depth - 1);
-        qDebug() << "101010===========================================2" << our_result;
+        temp_state.apply_move(candidate_move);            // next = red
+        qDebug() << "101010=========1";
+        our_result = temp_state.get_best_move_score(depth - 1);   // next black's max
+        qDebug() << "101010=========2" << our_result;
         if (our_result > best_so_far)
+        {
             best_so_far = our_result;
-        qDebug() << "101010===========================================4";
-        if (next_player == ChessPlayer::BLACK)
-        {
-            qDebug() << "101010===========================================5";
-            if (best_so_far > black_best)
-                black_best = best_so_far;
-            qDebug() << "101010===========================================51" << candidate_move.index << candidate_move.m_to_col << candidate_move.m_to_row;
-            if (-best_so_far < red_best)
-                return candidate_move;
-            qDebug() << "101010===========================================52";
+            qDebug() << "101010=========4";
+            if (next_player == ChessPlayer::BLACK)               // false
+            {
+                qDebug() << "101010========5";
+                if (best_so_far > red_best)
+                    red_best = best_so_far;
+                qDebug() << "101010========51" << candidate_move.index << candidate_move.m_to_col << candidate_move.m_to_row;
+                if (-best_so_far < black_best)
+                    return candidate_move;
+                qDebug() << "101010=========52";
+            }
+            else
+            {
+                qDebug() << "101010========6";
+                if (best_so_far > black_best)
+                    black_best = best_so_far;
+                if (-best_so_far < red_best)
+                    return candidate_move;
+            }
         }
-        else
-        {
-            qDebug() << "101010===========================================6";
-            if (best_so_far > red_best)
-                red_best = best_so_far;
-            if (-best_so_far < black_best)
-                return candidate_move;
-        }
-        qDebug() << "101010===========================================7";
-        temp_state.cancel_move();
+        qDebug() << "101010========7";
+        temp_state.cancel_move();                                // next = black
     }
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -442,7 +446,7 @@ ChessMove ChessState::get_best_move(unsigned short depth)
 int ChessState::get_calc_score()
 {
     int playerScore = 0;
-    static constexpr int chessScore[8] = { 200, 20, 40, 60, 100, 80, 10, 0 };
+    static constexpr short chessScore[8] = { 200, 20, 40, 60, 100, 80, 10, 0 };
     for (const auto & [i, j]: stones)
         if (i < 16)
             playerScore += chessScore[j->type];

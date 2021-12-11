@@ -75,7 +75,7 @@ void BoardWidget::mousePressEvent(QMouseEvent *event)
         QString style = WidgetStone::m_btnChecked->styleSheet();
         WidgetStone::m_btnChecked->setStyleSheet(style.replace(style.indexOf("yellow"), 6,  "#e09a53"));
         WidgetStone::m_btnChecked = nullptr;
-        _move = m_state->get_best_move(3);
+        _move = m_state->get_best_move(2);
         m_state->apply_move(_move);
         m_btns[_move.index]->setGeometry(real_rect(_move.m_to_row, _move.m_to_col));
         return;
@@ -100,7 +100,7 @@ BoardWidget::BoardWidget(QWidget *parent) : QWidget(parent), m_state(new ChessSt
                 QString style = WidgetStone::m_btnChecked->styleSheet();
                 WidgetStone::m_btnChecked->setStyleSheet(style.replace(style.indexOf("yellow"), 6,  "#e09a53"));
                 WidgetStone::m_btnChecked = nullptr;
-                _move = m_state->get_best_move(3);
+                _move = m_state->get_best_move(2);
                 m_state->apply_move(_move);
                 m_btns[_move.index]->setGeometry(real_rect(_move.m_to_row, _move.m_to_col));
                 return;
