@@ -9,10 +9,10 @@ class ChessStone
 public:
     static constexpr char name_string[2][7][4]
     {
-        {"將", "士", "象", "馬", "車", "炮", "卒"},
-        {"帥", "士", "相", "馬", "車", "炮", "兵"}
+        {"將", "士", "象", "馬", "車", "砲", "卒"},
+        {"帥", "仕", "相", "傌", "俥", "炮", "兵"}
     };
-    const enum Type { JIANG, SHI, XIANG, MA, CHE, PAO, BING } type;
+    enum Type { JIANG, SHI, XIANG, MA, CHE, PAO, BING, DEAD } type;
     unsigned short index, row, col;
     Color color;
     inline ChessStone(Type type, unsigned short r, unsigned short c, Color color):

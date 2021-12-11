@@ -24,7 +24,6 @@ WidgetStone::WidgetStone(unsigned short i, ChessStone* stone, QWidget* parent):
             }
             else
             {
-
                 QString&& style = m_btnChecked->styleSheet();
                 m_btnChecked->setStyleSheet(styleSheet());
                 setStyleSheet(style);
@@ -33,6 +32,7 @@ WidgetStone::WidgetStone(unsigned short i, ChessStone* stone, QWidget* parent):
         }
         else
         {
+            if (index < 16) return ;
             m_btnChecked = this;
             QString style = styleSheet();
             setStyleSheet(style.replace(style.indexOf("#e09a53"), 7,  "yellow"));

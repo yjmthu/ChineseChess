@@ -24,14 +24,23 @@ private:
     bool can_move_bing(const ChessStone* st, const ChessMove& move);
 public:
     explicit ChessState();
+    explicit ChessState(const ChessState&);
     ~ChessState();
+    static int red_best, black_best;
+    static constexpr int MIN_SCORE = 200000000, MAX_SCORE = -2000000000;
     std::map<unsigned short, ChessStone*> stones;
     std::array<std::array<ChessStone*, 9>, 10> board;
     ChessPlayer next_player;
-    ChessMove last_move;
-    //static ChessState new_game();
-    short apply_move(const ChessMove& move);
+    ChessBack last_move;
+    ChessPlayer::Color get_winer();
+    std::vector<ChessMove> get_valid_moves();
+    int get_best_move_score(unsigned short depth=0);
+    ChessMove get_best_move(unsigned short depth=0);
+    int get_calc_score();
+    void cancel_move();
+    void apply_move(const ChessMove& move);
     bool is_valid_move(const ChessMove& move);
+    void operator=(const ChessState& other_state);
 };
 
 #endif // CHESSSTATE_H

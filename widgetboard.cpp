@@ -50,13 +50,13 @@ void BoardWidget::resizeEvent(QResizeEvent *event)
             "border-radius:%1px;"
             "border:1px solid brown;"
             "background-color:#e09a53;"
-            "color:%2;font: 20pt \"超研澤粗行楷\";"
+            "color:%2;font: bold 20pt \"思源宋体 CN SemiBold\";"
             "text-align:center;"
             "}"
 //            "QPushButton:hover{"
 //            "background-color:rgb(14, 220, 0);"
 //            "}"
-        ).arg(D/2).arg(m_state->stones[j->index]->color == ChessPlayer::RED ? "red" : "black"));
+        ).arg(D/2).arg(j->index > 15 ? "red" : "black"));
         j->setGeometry(real_rect(m_state->stones[j->index]->row, m_state->stones[j->index]->col));
     }
 }
@@ -67,21 +67,22 @@ void BoardWidget::mousePressEvent(QMouseEvent *event)
     if (r > 10 || c > 9) return;
     // qDebug() << "检查移动" << r << c << (bool)m_state[r][c];
     if (!WidgetStone::m_btnChecked) return;
-    const ChessMove move = { WidgetStone::m_btnChecked->index, r, c };
-    if (m_state->is_valid_move(move))
+    ChessMove _move = { WidgetStone::m_btnChecked->index, r, c };
+    if (m_state->is_valid_move(_move))
     {
-        m_state->apply_move(move);
+        m_state->apply_move(_move);
         WidgetStone::m_btnChecked->setGeometry(real_rect(r, c));
         QString style = WidgetStone::m_btnChecked->styleSheet();
         WidgetStone::m_btnChecked->setStyleSheet(style.replace(style.indexOf("yellow"), 6,  "#e09a53"));
         WidgetStone::m_btnChecked = nullptr;
+        _move = m_state->get_best_move(3);
+        m_state->apply_move(_move);
+        m_btns[_move.index]->setGeometry(real_rect(_move.m_to_row, _move.m_to_col));
+        return;
     }
-    else
-    {
-        QString style = WidgetStone::m_btnChecked->styleSheet();
-        WidgetStone::m_btnChecked->setStyleSheet(style.replace(style.indexOf("yellow"), 6,  "#e09a53"));
-        WidgetStone::m_btnChecked = nullptr;
-    }
+    QString style = WidgetStone::m_btnChecked->styleSheet();
+    WidgetStone::m_btnChecked->setStyleSheet(style.replace(style.indexOf("yellow"), 6,  "#e09a53"));
+    WidgetStone::m_btnChecked = nullptr;
 }
 
 
@@ -90,22 +91,23 @@ BoardWidget::BoardWidget(QWidget *parent) : QWidget(parent), m_state(new ChessSt
     for (auto& [i, j] : m_state->stones) {
         connect(m_btns[i] = new WidgetStone(i, j, this), &WidgetStone::beEat, this, [=](unsigned short index){
             const auto st = m_state->stones[index];
-            const ChessMove move = { WidgetStone::m_btnChecked->index, st->row, st->col };
-            if (m_state->is_valid_move(move))
+            ChessMove _move = { WidgetStone::m_btnChecked->index, st->row, st->col };
+            if (m_state->is_valid_move(_move))
             {
-                m_state->apply_move(move);
+                m_state->apply_move(_move);
                 m_btns[index]->hide();
-                WidgetStone::m_btnChecked->setGeometry(real_rect(st->row, st->col));
+                WidgetStone::m_btnChecked->move(m_btns[index]->pos());
                 QString style = WidgetStone::m_btnChecked->styleSheet();
                 WidgetStone::m_btnChecked->setStyleSheet(style.replace(style.indexOf("yellow"), 6,  "#e09a53"));
                 WidgetStone::m_btnChecked = nullptr;
+                _move = m_state->get_best_move(3);
+                m_state->apply_move(_move);
+                m_btns[_move.index]->setGeometry(real_rect(_move.m_to_row, _move.m_to_col));
+                return;
             }
-            else
-            {
-                QString style = WidgetStone::m_btnChecked->styleSheet();
-                WidgetStone::m_btnChecked->setStyleSheet(style.replace(style.indexOf("yellow"), 6,  "#e09a53"));
-                WidgetStone::m_btnChecked = nullptr;
-            }
+            QString style = WidgetStone::m_btnChecked->styleSheet();
+            WidgetStone::m_btnChecked->setStyleSheet(style.replace(style.indexOf("yellow"), 6,  "#e09a53"));
+            WidgetStone::m_btnChecked = nullptr;
         });
     }
 }
