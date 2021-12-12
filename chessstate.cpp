@@ -5,9 +5,6 @@
 #include <random>
 #include <algorithm>
 
-int ChessState::red_best= 0;
-int ChessState::black_best = 0;
-
 bool ChessState::can_move_jiang(const ChessStone *st, const ChessMove &move)
 {
     const ChessStone *st2 = board[move.m_to_row][move.m_to_col];
@@ -19,13 +16,13 @@ bool ChessState::can_move_jiang(const ChessStone *st, const ChessMove &move)
             return false;
         if (st->color == ChessPlayer::RED)
         {
-            for (short i = st->col - 1; i > move.m_to_row; --i)
-                if (board[i][4])  return false;
+            for (short i = st->row - 1; i > move.m_to_row; --i)
+                if (board[i][st->col])  return false;
         }
         else
         {
-            for (short i = st->col + 1; i < move.m_to_row; ++i)
-                if (board[i][4]) return false;
+            for (short i = st->row + 1; i < move.m_to_row; ++i)
+                if (board[i][st->col]) return false;
         }
         return true;
     }
@@ -270,11 +267,10 @@ ChessState::ChessState():
             else
                 stones[j->index=index++] = j;
     }
-    red_best = black_best = 0;
 }
 
 ChessState::ChessState(const ChessState & other):
-    board(other.board), next_player(other.next_player)
+    stones(other.stones), board(other.board), next_player(other.next_player)
 {
     for (auto& i: board)
     {
@@ -287,6 +283,13 @@ ChessState::ChessState(const ChessState & other):
                 j = new ChessStone(*j);
                 stones[j->index] = j;
             }
+        }
+    }
+    for (auto& [i, j]: stones)
+    {
+        if (j->type == ChessStone::DEAD)
+        {
+            j = new ChessStone(*j);
         }
     }
 }
@@ -323,6 +326,12 @@ std::vector<ChessMove> ChessState::get_valid_moves()
                 if (is_valid_move(temp_move))
                 {
                     //qDebug() << i << temp_move.m_to_row << temp_move.m_to_col;
+                    if (can_directly_win(&temp_move))
+                    {
+                        lst.clear();
+                        lst.push_back(temp_move);
+                        break;
+                    }
                     lst.push_back(temp_move);
                 }
                 ++temp_move.m_to_col;
@@ -330,8 +339,36 @@ std::vector<ChessMove> ChessState::get_valid_moves()
             ++temp_move.m_to_row;
         }
     }
-    qDebug() << "君子有所为, 有所不为" << lst.size();
     return lst;
+}
+
+bool ChessState::can_directly_win(const ChessMove *move)
+{
+    return move->index == 4 || move->index == 27;
+}
+
+short ChessState::get_max_score(short cur_min_score, unsigned short depth)
+{
+    if (get_winer() == next_player.other())
+        return MIN_SCORE;
+    if (!depth)
+        return get_score();
+    short max_score = MIN_SCORE, score;
+    for (auto& candidate_move: get_valid_moves())
+    {
+        apply_move(candidate_move);                       // next = black
+        score = get_max_score(max_score, depth-1);    // next black's max
+        cancel_move();
+        if (score >= cur_min_score)
+        {
+            return score;
+        }
+        if (score > max_score)
+        {
+            max_score = score;
+        }
+    }
+    return max_score;
 }
 
 ///
@@ -341,50 +378,28 @@ std::vector<ChessMove> ChessState::get_valid_moves()
 /// \return
 ///
 
-int ChessState::get_best_move_score(unsigned short depth)  // next = red player
+short ChessState::get_min_score(short cur_max_score, unsigned short depth)
 {
-    ChessState temp_state(*this);
-    ChessPlayer winer = get_winer();
-    qDebug() << "进入此地却无人" << temp_state.next_player;
-    if (winer == next_player)
-        return MAX_SCORE;
-    else if (winer == next_player.other())
+    if (get_winer() == next_player.other())
         return MIN_SCORE;
-    qDebug() << "出入此地快哉";
     if (!depth)
-        return get_calc_score();
-    qDebug() << "人生一场, 得失难量";
-    int our_result, best_so_far = MIN_SCORE;
+        return get_score();
+    short min_score = MAX_SCORE, score;
     for (auto& candidate_move: get_valid_moves())
     {
-        qDebug() << "循环王府, 五十五中" << candidate_move.index << candidate_move.m_to_col << candidate_move.m_to_row;
-        temp_state.apply_move(candidate_move);                   // next = black
-        our_result = -temp_state.get_best_move_score(depth-1);   //
-        qDebug() << "分数无常, 无需忧劳" << our_result << best_so_far;
-        if (our_result > best_so_far)
+        apply_move(candidate_move);                       // next = black
+        score = get_max_score(min_score, depth-1);    // next black's max
+        cancel_move();
+        if (score <= cur_max_score)
         {
-            best_so_far = our_result;
-            if (next_player == ChessPlayer::BLACK)               // yes
-            {
-                qDebug() << "黑方入场" << best_so_far;
-                if (best_so_far > red_best)
-                    red_best = best_so_far;
-                if (-best_so_far < black_best)
-                    return best_so_far;
-            }
-            else
-            {
-                qDebug() << "红方入场" << best_so_far;
-                if (best_so_far > black_best)
-                    black_best = best_so_far;
-                if (-best_so_far < red_best)
-                    return best_so_far;
-            }
+            return score;
         }
-        temp_state.cancel_move();
+        if (score < min_score)
+        {
+            min_score = score;
+        }
     }
-    qDebug() << "狭路相逢勇者胜";
-    return best_so_far;
+    return min_score;
 }
 
 ///
@@ -397,62 +412,41 @@ int ChessState::get_best_move_score(unsigned short depth)  // next = red player
 ChessMove ChessState::get_best_move(unsigned short depth) // next = black
 {
     std::vector<ChessMove> && possible_moves = get_valid_moves();
-    ChessState temp_state(*this);
-    int our_result, best_so_far = MIN_SCORE;
+    short cur_max_score = MIN_SCORE, score;
+    ChessMove* step = nullptr;
     for (auto& candidate_move: possible_moves)
     {
-        temp_state.apply_move(candidate_move);            // next = red
-        qDebug() << "101010=========1";
-        our_result = temp_state.get_best_move_score(depth - 1);   // next black's max
-        qDebug() << "101010=========2" << our_result;
-        if (our_result > best_so_far)
+        apply_move(candidate_move);                        // next = red
+        score = get_min_score(cur_max_score, depth-1);   // next red's max
+        cancel_move();
+        if (score > cur_max_score)
         {
-            best_so_far = our_result;
-            qDebug() << "101010=========4";
-            if (next_player == ChessPlayer::BLACK)               // false
-            {
-                qDebug() << "101010========5";
-                if (best_so_far > red_best)
-                    red_best = best_so_far;
-                qDebug() << "101010========51" << candidate_move.index << candidate_move.m_to_col << candidate_move.m_to_row;
-                if (-best_so_far < black_best)
-                    return candidate_move;
-                qDebug() << "101010=========52";
-            }
-            else
-            {
-                qDebug() << "101010========6";
-                if (best_so_far > black_best)
-                    black_best = best_so_far;
-                if (-best_so_far < red_best)
-                    return candidate_move;
-            }
+            cur_max_score = score;
+            step = &candidate_move;
         }
-        qDebug() << "101010========7";
-        temp_state.cancel_move();                                // next = black
     }
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<size_t> dis(0, possible_moves.size()-1);
-    return possible_moves[dis(gen)];
+    if (!step)
+    {
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<size_t> dis(0, possible_moves.size()-1);
+        step = &possible_moves .at(dis(gen));
+    }
+    return *step;
 }
 
-///
-/// \brief ChessState::get_calc_score
-/// 获取next_player的分数
-/// \return
-///
-
-int ChessState::get_calc_score()
+short ChessState::get_score()
 {
-    int playerScore = 0;
-    static constexpr short chessScore[8] = { 200, 20, 40, 60, 100, 80, 10, 0 };
+    short playerScore = 0;
+    // { JIANG, SHI, XIANG, MA, CHE, PAO, BING, DEAD }
+    static constexpr short chessScore[8] = { 150, 1, 1, 5, 10, 5, 2, 0 };
     for (const auto & [i, j]: stones)
         if (i < 16)
             playerScore += chessScore[j->type];
         else
             playerScore -= chessScore[j->type];
-    return next_player == ChessPlayer::BLACK ? playerScore: -playerScore;
+    qDebug() << playerScore;
+    return playerScore;
 }
 
 void ChessState::cancel_move()
@@ -495,7 +489,10 @@ void ChessState::apply_move(const ChessMove& move)
 bool ChessState::is_valid_move(const ChessMove& move)
 {
     auto st = stones[move.index];
-    if (next_player != st->color) return false;
+    if (next_player != st->color)
+        return false;
+    if (get_winer() != ChessPlayer::NONE)
+        return false;
     switch (st->type) {
     case ChessStone::JIANG:
         return can_move_jiang(st, move);
@@ -511,7 +508,7 @@ bool ChessState::is_valid_move(const ChessMove& move)
         return can_move_shi(st, move);
     case ChessStone::MA:
         return can_move_ma(st, move);
-    default:
+    default:  // SUCH AS DEAD
         break;
     }
     return false;
