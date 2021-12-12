@@ -285,7 +285,7 @@ ChessState::ChessState(const ChessState & other):
             }
         }
     }
-    for (auto& [i, j]: stones)
+    for (auto& j: stones)
     {
         if (j->type == ChessStone::DEAD)
         {
@@ -296,7 +296,7 @@ ChessState::ChessState(const ChessState & other):
 
 ChessState::~ChessState()
 {
-    for (const auto& [i, j]: stones)
+    for (const auto j: stones)
         delete j;
 }
 
@@ -313,7 +313,7 @@ std::vector<ChessMove> ChessState::get_valid_moves()
 {
     std::vector<ChessMove> lst;
     ChessMove temp_move;
-    for (const auto & [i, j]: stones)
+    for (unsigned char i = 0; i < 32; ++i)
     {
         temp_move.index = i;
         temp_move.m_to_row = 0;
@@ -330,7 +330,7 @@ std::vector<ChessMove> ChessState::get_valid_moves()
                     {
                         lst.clear();
                         lst.push_back(temp_move);
-                        break;
+                        return lst;
                     }
                     lst.push_back(temp_move);
                 }
@@ -344,20 +344,21 @@ std::vector<ChessMove> ChessState::get_valid_moves()
 
 bool ChessState::can_directly_win(const ChessMove *move)
 {
-    return move->index == 4 || move->index == 27;
+    auto & c = board[move->m_to_row][move->m_to_col];
+    return c && c->type == ChessStone::JIANG;
 }
 
 short ChessState::get_max_score(short cur_min_score, unsigned short depth)
 {
-    if (get_winer() == next_player.other())
-        return MIN_SCORE;
+//    if (get_winer() == next_player.other())
+//        return MIN_SCORE;
     if (!depth)
         return get_score();
     short max_score = MIN_SCORE, score;
     for (auto& candidate_move: get_valid_moves())
     {
-        apply_move(candidate_move);                       // next = black
-        score = get_max_score(max_score, depth-1);    // next black's max
+        apply_move(candidate_move);
+        score = get_min_score(max_score, depth-1);
         cancel_move();
         if (score >= cur_min_score)
         {
@@ -380,15 +381,15 @@ short ChessState::get_max_score(short cur_min_score, unsigned short depth)
 
 short ChessState::get_min_score(short cur_max_score, unsigned short depth)
 {
-    if (get_winer() == next_player.other())
-        return MIN_SCORE;
+//    if (get_winer() == next_player.other())
+//        return MIN_SCORE;
     if (!depth)
         return get_score();
     short min_score = MAX_SCORE, score;
     for (auto& candidate_move: get_valid_moves())
     {
-        apply_move(candidate_move);                       // next = black
-        score = get_max_score(min_score, depth-1);    // next black's max
+        apply_move(candidate_move);
+        score = get_max_score(min_score, depth - 1);
         cancel_move();
         if (score <= cur_max_score)
         {
@@ -416,8 +417,8 @@ ChessMove ChessState::get_best_move(unsigned short depth) // next = black
     ChessMove* step = nullptr;
     for (auto& candidate_move: possible_moves)
     {
-        apply_move(candidate_move);                        // next = red
-        score = get_min_score(cur_max_score, depth-1);   // next red's max
+        apply_move(candidate_move);
+        score = get_min_score(cur_max_score, depth - 1);
         cancel_move();
         if (score > cur_max_score)
         {
@@ -438,31 +439,30 @@ ChessMove ChessState::get_best_move(unsigned short depth) // next = black
 short ChessState::get_score()
 {
     short playerScore = 0;
-    // { JIANG, SHI, XIANG, MA, CHE, PAO, BING, DEAD }
+    //  { JIANG, SHI, XIANG, MA, CHE, PAO, BING, DEAD }
     static constexpr short chessScore[8] = { 150, 1, 1, 5, 10, 5, 2, 0 };
-    for (const auto & [i, j]: stones)
-        if (i < 16)
+    unsigned char i = 0;
+    for (const auto j: stones)
+        if (i++ < 16)
             playerScore += chessScore[j->type];
         else
             playerScore -= chessScore[j->type];
-    qDebug() << playerScore;
     return playerScore;
 }
 
 void ChessState::cancel_move()
 {
-    if (last_move.moved == (unsigned short)-1)
+    if (!last_steps.size())
         return;
-    auto st = stones[last_move.moved];
-    board[st->row][st->col] = last_move.eated;
-    st->col = last_move.old_col;
-    st->row = last_move.old_row;
-    board[last_move.old_row][last_move.old_col] = st;
-    if (last_move.eated)
-    {
-        last_move.eated->type = last_move.eated_type;
-    }
-    last_move.moved = (unsigned short)-1;
+    ChessBack& top = last_steps.top();
+    auto st = stones[top.moved];
+    board[st->row][st->col] = top.eated;
+    st->col = top.old_col;
+    st->row = top.old_row;
+    board[top.old_row][top.old_col] = st;
+    if (top.eated)
+        top.eated->type = top.eated_type;
+    last_steps.pop();
     next_player.next();
 }
 
@@ -471,18 +471,19 @@ void ChessState::apply_move(const ChessMove& move)
     auto st = stones[move.index];
     board[st->row][st->col] = nullptr;
     auto& st1 = board[move.m_to_row][move.m_to_col];
-    last_move.eated = st1;
-    last_move.moved = move.index;
-    last_move.old_col = st->col;
-    last_move.old_row = st->row;
     if (st1)
     {
-        last_move.eated_type = st1->type;
+        last_steps.push(ChessBack {move.index, st1, st->row, st->col, st1->type});
         st1->type = ChessStone::DEAD;
+    }
+    else
+    {
+        last_steps.push(ChessBack {move.index, st1, st->row, st->col, ChessStone::DEAD});
     }
     st1 = st;
     st->row = move.m_to_row;
     st->col = move.m_to_col;
+    board[st->row][st->col] = st;
     next_player.next();
 }
 
@@ -516,11 +517,10 @@ bool ChessState::is_valid_move(const ChessMove& move)
 
 void ChessState::operator=(const ChessState &other_state)
 {
-    stones.clear();
     next_player = other_state.next_player;
-    for (unsigned short i = 0; i < 10; ++ i)
+    for (unsigned char i = 0; i < 10; ++ i)
     {
-        for (unsigned short j = 0; j < 9; ++j)
+        for (unsigned char j = 0; j < 9; ++j)
         {
             auto & st = board[i][j];
             delete st;

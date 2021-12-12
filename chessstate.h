@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <array>
+#include <stack>
 
 #include <chessplayer.h>
 #include <chessmove.h>
@@ -28,10 +29,10 @@ public:
     ~ChessState();
     static constexpr short MIN_SCORE = std::numeric_limits<short>::min();
     static constexpr short MAX_SCORE = std::numeric_limits<short>::max();
-    std::map<unsigned short, ChessStone*> stones;
+    std::array<ChessStone*, 32> stones;
     std::array<std::array<ChessStone*, 9>, 10> board;
     ChessPlayer next_player;
-    ChessBack last_move;
+    std::stack<ChessBack> last_steps;
     ChessPlayer::Color get_winer();
     std::vector<ChessMove> get_valid_moves();
     bool can_directly_win(const ChessMove* move);

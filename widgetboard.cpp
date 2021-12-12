@@ -7,6 +7,8 @@
 #include <QPainter>
 #include <QDebug>
 #include <QResizeEvent>
+#include <QTimer>
+#include <QMessageBox>
 
 void BoardWidget::paintEvent(QPaintEvent *)
 {
@@ -72,11 +74,20 @@ void BoardWidget::mousePressEvent(QMouseEvent *event)
         QString style = WidgetStone::m_btnChecked->styleSheet();
         WidgetStone::m_btnChecked->setStyleSheet(style.replace(style.indexOf("yellow"), 6,  "#e09a53"));
         WidgetStone::m_btnChecked = nullptr;
-        _move = m_state->get_best_move(4);
-        const auto st = m_state->board[_move.m_to_row][_move.m_to_col];
-        if (st) m_btns[st->index]->hide();
-        m_state->apply_move(_move);
-        m_btns[_move.index]->setGeometry(real_rect(_move.m_to_row, _move.m_to_col));
+
+        QTimer::singleShot(100, this, [this](){
+            ChessMove _move = m_state->get_best_move(5);
+            const auto st = m_state->board[_move.m_to_row][_move.m_to_col];
+            if (st) m_btns[st->index]->hide();
+            m_state->apply_move(_move);
+            m_btns[_move.index]->setGeometry(real_rect(_move.m_to_row, _move.m_to_col));
+            if (m_state->get_winer() == ChessPlayer::BLACK)
+            {
+                QMessageBox::information(this, "提示", "恭喜, 您输得很惨了!");
+                return ;
+            }
+        });
+
         return;
     }
     QString style = WidgetStone::m_btnChecked->styleSheet();
@@ -87,7 +98,8 @@ void BoardWidget::mousePressEvent(QMouseEvent *event)
 
 BoardWidget::BoardWidget(QWidget *parent) : QWidget(parent), m_state(new ChessState)
 {
-    for (auto& [i, j] : m_state->stones) {
+    unsigned char i = 0;
+    for (auto j : m_state->stones) {
         connect(m_btns[i] = new WidgetStone(i, j, this), &WidgetStone::beEat, this, [=](unsigned short index){
             auto st = m_state->stones[index];
             ChessMove _move = { WidgetStone::m_btnChecked->index, st->row, st->col };
@@ -99,18 +111,31 @@ BoardWidget::BoardWidget(QWidget *parent) : QWidget(parent), m_state(new ChessSt
                 QString style = WidgetStone::m_btnChecked->styleSheet();
                 WidgetStone::m_btnChecked->setStyleSheet(style.replace(style.indexOf("yellow"), 6,  "#e09a53"));
                 WidgetStone::m_btnChecked = nullptr;
-                _move = m_state->get_best_move(4);
-                st = m_state->board[_move.m_to_row][_move.m_to_col];
-                if (st)
-                    m_btns[st->index]->hide();
-                m_state->apply_move(_move);
-                m_btns[_move.index]->setGeometry(real_rect(_move.m_to_row, _move.m_to_col));
+                if (m_state->get_winer() == ChessPlayer::RED)
+                {
+                    QMessageBox::information(this, "提示", "可惜了, 您终于获胜了!");
+                    return ;
+                }
+                QTimer::singleShot(100, this, [this](){
+                    ChessMove _move = m_state->get_best_move(5);
+                    auto st = m_state->board[_move.m_to_row][_move.m_to_col];
+                    if (st)
+                        m_btns[st->index]->hide();
+                    m_state->apply_move(_move);
+                    m_btns[_move.index]->setGeometry(real_rect(_move.m_to_row, _move.m_to_col));
+                    if (m_state->get_winer() == ChessPlayer::BLACK)
+                    {
+                        QMessageBox::information(this, "提示", "恭喜恭喜, 您输得很惨了!");
+                        return ;
+                    }
+                });
                 return;
             }
             QString style = WidgetStone::m_btnChecked->styleSheet();
             WidgetStone::m_btnChecked->setStyleSheet(style.replace(style.indexOf("yellow"), 6,  "#e09a53"));
             WidgetStone::m_btnChecked = nullptr;
         });
+        ++i;
     }
 }
 
