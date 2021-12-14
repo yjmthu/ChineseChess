@@ -12,6 +12,11 @@
 
 void BoardWidget::paintEvent(QPaintEvent *)
 {
+    QPalette pal(palette());
+    pal.setColor(QPalette::Window, QColor(0xEACCA6));
+    setAutoFillBackground(true);
+    setPalette(pal);
+
     QPainter painter(this);
 
     painter.setPen(QPen(Qt::black, 2));
@@ -20,19 +25,51 @@ void BoardWidget::paintEvent(QPaintEvent *)
     painter.drawLine(QPoint(topPadding, topPadding), QPoint(leftPadding, topPadding+9*D));
     painter.drawLine(QPoint(topPadding+8*D, topPadding), QPoint(leftPadding+8*D, topPadding+9*D));
 
+    painter.setPen(QPen(Qt::red, 1));
+
+    const int len = D / 6, dis = 2;
+    std::array<QPoint, 10> lst {real_pos(2, 1), real_pos(2, 7), real_pos(7, 1), real_pos(7, 7), real_pos(3, 2), real_pos(3, 4), real_pos(3, 6), real_pos(6, 2), real_pos(6, 4), real_pos(6, 6)};
+    std::array<QPoint, 2> lst_l = {real_pos(3, 0), real_pos(6, 0) }, lst_r {real_pos(6, 8), real_pos(3, 8)};
+    for (const auto& i : lst) {
+        painter.drawLine(i + QPoint(dis, dis), i + QPoint(dis, dis + len));
+        painter.drawLine(i + QPoint(dis, dis), i + QPoint(dis + len, dis));
+        painter.drawLine(i + QPoint(dis, -dis), i + QPoint(dis, -dis - len));
+        painter.drawLine(i + QPoint(dis, -dis), i + QPoint(dis + len, -dis));
+        painter.drawLine(i + QPoint(-dis, dis), i + QPoint(-dis, dis + len));
+        painter.drawLine(i + QPoint(-dis, dis), i + QPoint(-dis - len, dis));
+        painter.drawLine(i + QPoint(-dis, -dis), i + QPoint(-dis - len, -dis));
+        painter.drawLine(i + QPoint(-dis, -dis), i + QPoint(-dis, -dis - len));
+    }
+    for (const auto& i: lst_l)
+    {
+        painter.drawLine(i + QPoint(dis, dis), i + QPoint(dis, dis + len));
+        painter.drawLine(i + QPoint(dis, dis), i + QPoint(dis + len, dis));
+        painter.drawLine(i + QPoint(dis, -dis), i + QPoint(dis, -dis - len));
+        painter.drawLine(i + QPoint(dis, -dis), i + QPoint(dis + len, -dis));
+    }
+
+    for (const auto& i: lst_r)
+    {
+        painter.drawLine(i + QPoint(-dis, dis), i + QPoint(-dis, dis + len));
+        painter.drawLine(i + QPoint(-dis, dis), i + QPoint(-dis - len, dis));
+        painter.drawLine(i + QPoint(-dis, -dis), i + QPoint(-dis - len, -dis));
+        painter.drawLine(i + QPoint(-dis, -dis), i + QPoint(-dis, -dis - len));
+    }
+
     painter.setPen(QPen(Qt::black, 1));
+
     for(int i = 1; i < 9; i++)
         painter.drawLine(QPoint(leftPadding, topPadding+i*D), QPoint(leftPadding+8*D, topPadding+i*D));
     for(int i = 1; i < 8; i++)
     {
-        painter.drawLine(QPoint(leftPadding+i*D, topPadding), QPoint(leftPadding+i*D, topPadding+4*D));
-        painter.drawLine(QPoint(leftPadding+i*D, topPadding+5*D), QPoint(leftPadding+i*D, topPadding+9*D));
+        painter.drawLine(real_pos(0, i), real_pos(4, i));
+        painter.drawLine(real_pos(5, i), real_pos(9, i));
     }
 
-    painter.drawLine(QPoint(leftPadding+3*D, topPadding), QPoint(leftPadding+5*D, topPadding+2*D));
-    painter.drawLine(QPoint(leftPadding+3*D, topPadding+2*D), QPoint(leftPadding+5*D, topPadding));
-    painter.drawLine(QPoint(leftPadding+3*D, topPadding+7*D), QPoint(leftPadding+5*D, topPadding+9*D));
-    painter.drawLine(QPoint(leftPadding+3*D, topPadding+9*D), QPoint(leftPadding+5*D, topPadding+7*D));
+    painter.drawLine(real_pos(0, 3), real_pos(2, 5));
+    painter.drawLine(real_pos(2, 3), real_pos(0, 5));
+    painter.drawLine(real_pos(7, 3), real_pos(9, 5));
+    painter.drawLine(real_pos(9, 3), real_pos(7, 5));
 
     painter.setPen(QPen(Qt::blue, 2));
     painter.setFont(QFont("汉仪篆书繁", D/2, 800));
@@ -96,7 +133,7 @@ void BoardWidget::mousePressEvent(QMouseEvent *event)
 }
 
 
-BoardWidget::BoardWidget(QWidget *parent) : QWidget(parent), m_state(new ChessState)
+BoardWidget::BoardWidget(QWidget *parent) : QWidget(parent), m_state(new ChessState(ChessPlayer::BLACK))
 {
     unsigned char i = 0;
     for (auto j : m_state->stones) {

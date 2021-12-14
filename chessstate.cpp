@@ -195,7 +195,8 @@ bool ChessState::can_move_bing(const ChessStone *st, const ChessMove &move)
 /// 默认构造函数, 暂时就先这么写吧
 ///
 
-ChessState::ChessState():
+ChessState::ChessState(ChessPlayer computer):
+    is_computer_black(computer == ChessPlayer::BLACK),
     board({
           std::array<ChessStone*, 9>(
               {
@@ -256,7 +257,7 @@ ChessState::ChessState():
                   new ChessStone(ChessStone::CHE,9,8,ChessPlayer::RED)
               })
     }),
-    next_player(ChessPlayer::Color::RED)
+    next_player(ChessPlayer::RED)
 {
     unsigned short index = 0;
     for (const auto & i : board)
@@ -440,14 +441,14 @@ short ChessState::get_score()
 {
     short playerScore = 0;
     //  { JIANG, SHI, XIANG, MA, CHE, PAO, BING, DEAD }
-    static constexpr short chessScore[8] = { 150, 1, 1, 5, 10, 5, 2, 0 };
+    static constexpr short chessScore[8] = { 150, 1, 1, 5, 10, 4, 2, 0 };
     unsigned char i = 0;
     for (const auto j: stones)
         if (i++ < 16)
             playerScore += chessScore[j->type];
         else
             playerScore -= chessScore[j->type];
-    return playerScore;
+    return is_computer_black? playerScore: -playerScore;
 }
 
 void ChessState::cancel_move()
@@ -518,9 +519,9 @@ bool ChessState::is_valid_move(const ChessMove& move)
 void ChessState::operator=(const ChessState &other_state)
 {
     next_player = other_state.next_player;
-    for (unsigned char i = 0; i < 10; ++ i)
+    for (size_t i = 0; i < 10; ++ i)
     {
-        for (unsigned char j = 0; j < 9; ++j)
+        for (size_t j = 0; j < 9; ++j)
         {
             auto & st = board[i][j];
             delete st;

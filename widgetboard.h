@@ -13,6 +13,7 @@ class BoardWidget : public QWidget
 
 private:
     inline QRect real_rect(int r, int c) { return {leftPadding / 2 + c * D, topPadding / 2 + r * D, D, D}; }
+    inline QPoint real_pos(int r, int c) { return {leftPadding + D * c, topPadding + D * r}; }
 
 protected:
     void paintEvent(QPaintEvent *event);

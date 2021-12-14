@@ -14,8 +14,8 @@ class ChessState
 {
 private:
     inline unsigned short abs(unsigned short a, unsigned short b) { return b>a?b-a:a-b; }
-    inline unsigned short distance(short x1, short y1, short x2, short y2)
-        {short dx = x1-x2, dy = y1-y2;return dx*dx + dy*dy;}
+    inline unsigned short distance(short x1, short y1, short x2, short y2) {short dx = x1-x2, dy = y1-y2;return dx*dx + dy*dy;}
+    const bool is_computer_black = true;
     bool can_move_jiang(const ChessStone* st, const ChessMove& move);
     bool can_move_shi(const ChessStone* st, const ChessMove& move);
     bool can_move_xiang(const ChessStone* st, const ChessMove& move);
@@ -24,7 +24,7 @@ private:
     bool can_move_pao(const ChessStone* st, const ChessMove& move);
     bool can_move_bing(const ChessStone* st, const ChessMove& move);
 public:
-    explicit ChessState();
+    explicit ChessState(ChessPlayer computer);
     explicit ChessState(const ChessState&);
     ~ChessState();
     static constexpr short MIN_SCORE = std::numeric_limits<short>::min();

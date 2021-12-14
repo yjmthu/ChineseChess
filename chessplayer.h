@@ -23,6 +23,7 @@ public:
     }
     inline void next(){ _color = Color(!_color); }
     inline operator Color(){ return _color; }
+    inline ChessPlayer& operator=(ChessPlayer other) { return this->_color = other._color, *this; }
 private:
     Color _color;
 };
